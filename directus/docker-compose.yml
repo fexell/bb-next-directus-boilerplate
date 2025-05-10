@@ -1,0 +1,25 @@
+services:
+  directus:
+    container_name: Directus
+    image: directus/directus:latest
+    ports:
+      - 8055:8055
+    volumes:
+      - ./database:/directus/database
+      - ./uploads:/directus/uploads
+      - ./extensions:/directus/extensions
+    environment:
+      SECRET: "iuacWVpsIgEjSHrGuyaRhu8R42ucYU3f"
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_PASSWORD: "test123"
+      DB_CLIENT: "sqlite3"
+      DB_FILENAME: "/directus/database/data.db"
+      WEBSOCKETS_ENABLED: "true"
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "http://localhost:8055,http://localhost:3000"
+      # EMAIL_SMTP_HOST: ""
+      # EMAIL_SMTP_PORT: "587"
+      # EMAIL_SMTP_USER: ""
+      # EMAIL_SMTP_PASSWORD: ""
+      # EMAIL_TRANSPORT: "smtp"
+      # EMAIL_FROM: ""
