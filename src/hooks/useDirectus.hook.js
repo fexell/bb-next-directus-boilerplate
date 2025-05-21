@@ -12,24 +12,36 @@ const useDirectusReadItem                   = async (collection, key, query = { 
 }
 
 const useDirectusReadItems                  = async (collection, query = { filter: null, fields: null }) => {
-  const regex                               = new RegExp(/((\w+)\:([A-Za-z0-9\|]+))/)
+  const filterRegex                         = new RegExp(/((\w+)\:(\w+))/)
+  const fieldRegex                          = new RegExp(/((\w+)\:([A-Za-z0-9\|]+))/)
 
   try {
     if(!collection && typeof collection !== 'string')
       throw 'Collection is required, and needs to be a string.'
 
-    if(query.fields && typeof query.fields === 'string' && !regex.test(query.fields))
+    if(query.filter && typeof query.filter === 'string' && !filterRegex.test(query.filter))
+      throw 'When "filter" is a string, it needs to follow the pattern: identifier:equals'
+
+    else if(query.filter && typeof query.filter === 'string' && filterRegex.test(query.filter)) {
+      query.filter                          = {
+        [ query.filter.match(filterRegex)[ 2 ] ]: {
+          _eq: query.filter.match(filterRegex)[ 3 ],
+        },
+      }
+    }
+
+    if(query.fields && typeof query.fields === 'string' && !fieldRegex.test(query.fields))
       throw 'When "fields" is a string, it needs to follow the pattern: field:block|block_2.'
 
-    else if(query.fields && typeof query.fields === 'string' && regex.test(query.fields)) {
+    else if(query.fields && typeof query.fields === 'string' && fieldRegex.test(query.fields)) {
       query.fields                          = [
         '*',
         {
-          [ query.fields.match(regex)[ 2 ] ]: [
+          [ query.fields.match(fieldRegex)[ 2 ] ]: [
             '*',
             {
               item: {
-                ...query.fields.match(regex)[ 3 ].split('|').reduce((_, item) => (_[ item ] = [ '*' ], _), {}),
+                ...query.fields.match(fieldRegex)[ 3 ].split('|').reduce((_, item) => (_[ item ] = [ '*' ], _), {}),
               },
             },
           ],
@@ -37,7 +49,7 @@ const useDirectusReadItems                  = async (collection, query = { filte
       ]
     }
 
-    return !query.filter && !query.fields
+    return Object.values(query).every((x) => !x)
       ? directus.request(readItems(collection))
       : directus.request(readItems(collection, query))
   } catch(error) {
